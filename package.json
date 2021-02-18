@@ -1,0 +1,19 @@
+{
+  "name": "orthanc_gui",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^11.2.3"
+  },
+  "dependencies": {
+    "axios": "^0.21.1",
+    "native-prompt": "^2.1.4"
+  }
+}
