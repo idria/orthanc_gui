@@ -9,10 +9,14 @@ function createWindow () {
     webPreferences: {
       nodeIntegration: true
     },
-    icon: __dirname + '/icon.jpg'
+    icon: __dirname + '/icon.jpg',
+    show: false
   });
 
   win.loadFile('index.html');
+
+  win.maximize();
+  win.show();
 }
 
 app.commandLine.appendSwitch('ignore-certificate-errors');

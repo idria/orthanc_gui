@@ -15,8 +15,8 @@ for (let i = 0; i < config.destinations.length; i++) {
 }
 
 // setup locale names
-document.getElementById("patNameLabel").innerHTML = locale.patName;
-document.getElementById("colNameLabel").innerHTML = locale.patName;
+document.getElementById("patNameLabel").innerHTML = locale.patientName;
+document.getElementById("colNameLabel").innerHTML = locale.patientName;
 document.getElementById("accessionNoLabel").innerHTML = locale.accessionNo;
 document.getElementById("colAccessionNoLabel").innerHTML = locale.accessionNo;
 document.getElementById("patientIdLabel").innerHTML = locale.patientId;
@@ -63,12 +63,12 @@ function checkProgress(id) {
                 if (res.data.Progress === 100) {
                     document.getElementById("progress").style = "width: 100%";
                     document.getElementById("progress").classList.add("bg-success");
-                    document.getElementById("patientTable").removeAttribute("disabled", "");
+                    document.getElementById("studiesTable").removeAttribute("disabled", "");
                 } else {
                     document.getElementById("progress").style = "width: " + res.data.Progress + "%";
                     if (res.data.ErrorCode) {
                         document.getElementById("progress").classList.add("bg-danger");
-                        document.getElementById("patientTable").removeAttribute("disabled", "");
+                        document.getElementById("studiesTable").removeAttribute("disabled", "");
                         alert(locale.sendError + res.data.ErrorDescription);
                     } else {
                         setTimeout(checkProgress(id), 5000);
@@ -78,8 +78,8 @@ function checkProgress(id) {
         }
     }).catch(function (err) {
         document.getElementById("progress").classList.add("bg-danger");
-        document.getElementById("patientTable").removeAttribute("disabled", "");
-        alert(locale.connError + err);
+        document.getElementById("studiesTable").removeAttribute("disabled", "");
+        alert(locale.connectionError + err);
     });
 }
 
@@ -97,11 +97,14 @@ function changeAccesionNo(id) {
                         rejectUnauthorized: false
                     })
                 }).then(function (res) {
-                    if (res.status != 200) {
+                    if (res.status == 200) {
+                        alert(local.modified);
+                        searchStudies();
+                    }else{
                         alert(local.invalidResp);
                     }
                 }).catch(function (err) {
-                    alert(locale.connError + err);
+                    alert(locale.connectionError + err);
                 });
             }
         });
@@ -112,17 +115,20 @@ function changeAccesionNo(id) {
 
 // delete study
 function deleteStudy(id) {
-    if (confirm("Desea borrar el estudio seleccionado.")) {
+    if (confirm(locale.deleteQuestion)) {
         axios.delete(config.servers.query + '/studies/' + id, {
             httpsAgent: new https.Agent({
                 rejectUnauthorized: false
             })
         }).then(function (res) {
-            if (res.status != 200) {
-                alert(local.invalidResp);
+            if (res.status == 200) {
+                alert(locale.deleted);
+                searchStudies();
+            }else{
+                alert(locale.invalidResp);
             }
         }).catch(function (err) {
-            alert(locale.connError + err);
+            alert(locale.connectionError + err);
         });
     }
 }
@@ -158,15 +164,15 @@ function sendStudy(id) {
                     // clean progress status
                     document.getElementById("progress").classList.remove("bg-success");
                     document.getElementById("progress").classList.remove("bg-danger");
-                    document.getElementById("patientTable").setAttribute("disabled", "");
+                    document.getElementById("studiesTable").setAttribute("disabled", "");
                     // progress bar
                     checkProgress(res.data.ID);
                 } else {
-                    alert(local.invalidResp);
+                    alert(locale.invalidResp);
                 }
             }
         }).catch(function (err) {
-            alert(locale.connError + err);
+            alert(locale.connectionError + err);
         });
     }
 }
@@ -253,13 +259,13 @@ function searchStudies() {
                                     modsInStudy.push(modality);
                                 }
                             } else {
-                                alert(locale.invalidResp);
+                                alert(locale.invalidResponse);
                             }
                         }
                     }
                     document.getElementById("MOD_" + study.studyHash).innerHTML = modsInStudy;
                 })).catch(function (err) {
-                    alert(locale.connError + err);
+                    alert(locale.connectionError + err);
                     readyForSearch();
                     return;
                 });
@@ -287,10 +293,10 @@ function searchStudies() {
             }
 
             readyForSearch();
-            document.getElementById("patientTableBody").innerHTML = table;
+            document.getElementById("studiesTableBody").innerHTML = table;
         }
     }).catch(function (err) {
-        alert(locale.connError + err);
+        alert(locale.connectionError + err);
         readyForSearch();
     });
 }

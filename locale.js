@@ -1,10 +1,10 @@
 exports.es = {
-    invalidConfig: "Archivo de configuración inexistente o inválido!",
+    invalidConfiguration: "Archivo de configuración inexistente o inválido!",
     invalidNew: "No se puede crear archivo de configuración nuevo.",
-    connError: "Error de conexión: ",
+    connectionError: "Error de conexión: ",
     sendError: "Error de envio: ",
-    invalidResp: "Respuesta inválida!",
-    patName: "Nombre",
+    invalidResponse: "Respuesta inválida!",
+    patientName: "Nombre",
     accessionNo: "No. de Acceso",
     accessionNoLabel: "Cambiar No. de Acceso:",
     patientId: "ID de Paciente",
@@ -22,16 +22,25 @@ exports.es = {
     empty: "Complete Nombre, ID, No. de Acceso y/o Fecha!",
     delete: "Borrar",
     errChange: "No se puede modificar el campo!",
-    ret: "Volver"
+    ret: "Volver",
+    seriesNo: "No. de Series",
+    seriesDesc: "Descripción de Series",
+    bodyPartExamined: "Parte del Cuerpo",
+    stationName: "Nombre de Estación",
+    noSelection: "Nada seleccionado!",
+    splitMessage: "1. Verifique que los datos del estudio.</br>2. Seleccione las series que desea separar a un nuevo estudio.</br>3. Click en separar.</br>4. Ingrese el Número de Acceso del estudio nuevo.",
+    modified: "Modificado!",
+    deleted: "Borrado!",
+    deleteQuestion: "Desea borrar el estudio seleccionado?"
 };
 
 exports.en =  {
-    invalidConfig: "Missing or invalid configuration file!",
+    invalidConfiguration: "Missing or invalid configuration file!",
     invalidNew: "Can't create new configuration file.",
-    connError: "Connection error: ",
+    connectionError: "Connection error: ",
     sendError: "Send error: ",
-    invalidResp: "Invalid response!",
-    patName: "Name",
+    invalidResponse: "Invalid response!",
+    patientName: "Name",
     accessionNo: "Accession No.",
     accessionNoLabel: "Change Accession No.:",
     patientId: "Patient ID",
@@ -49,5 +58,14 @@ exports.en =  {
     empty: "Fill Name, ID, Accession No. and/or Date!",
     delte: "Delete",
     errChange: "Can't change field!",
-    ret: "Return"
+    ret: "Return",
+    seriesNo: "Series No.",
+    seriesDesc: "Series Description",
+    bodyPartExamined: "Body Part",
+    stationName: "Station Name",
+    noSelection: "Nothing selected!",
+    splitMessage: "1. Verify study data.</br>2. Select series to split in a new study.</br>3. Click split.</br>4. Enter the new study Accession Number.",
+    modified: "Modified!",
+    deleted: "Deleted!",
+    deleteQuestion: "Do you want to delete selected study?"
 };

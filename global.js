@@ -5,7 +5,7 @@ exports.getConfig = function() {
     try {
         return JSON.parse(fs.readFileSync('./config.json'));
     } catch (err1) {
-        alert(mainLocale['es'].invalidConfig);
+        alert(mainLocale['es'].invalidConfiguration);
     
         // if missing create new file
         if (!fs.existsSync('./config.json')) {
@@ -81,11 +81,16 @@ exports.readStudiesResp = function(resp) {
 };
 
 exports.readSeriesResp = function(resp) {
+    let seriesHash = '';
     let bodyPartExamined = '';
     let modality = '';
     let seriesDescription = '';
-    let seriesNumber = '';
+    let seriesNo = '';
     let stationName = '';
+
+    if (resp.ID !== undefined) {
+        seriesHash = resp.ID;
+    }
 
     if (resp.MainDicomTags !== undefined) {
         if (resp.MainDicomTags.BodyPartExamined !== undefined) {
@@ -101,7 +106,7 @@ exports.readSeriesResp = function(resp) {
         }
 
         if (resp.MainDicomTags.SeriesNumber !== undefined) {
-            seriesNumber = resp.MainDicomTags.SeriesNumber;
+            seriesNo = resp.MainDicomTags.SeriesNumber;
         }
 
         if (resp.MainDicomTags.StationName !== undefined) {
@@ -110,10 +115,11 @@ exports.readSeriesResp = function(resp) {
     }
 
     return {
+        seriesHash: seriesHash,
         bodyPartExamined: bodyPartExamined,
         modality: modality,
         seriesDescription: seriesDescription,
-        seriesNumber: seriesNumber,
+        seriesNo: seriesNo,
         stationName: stationName
     };
 };
