@@ -18,6 +18,10 @@ document.getElementById("colStationName").innerHTML = locale.stationName;
 document.getElementById("splitButton").innerHTML = locale.split;
 document.getElementById("splitMessage").innerHTML = locale.splitMessage;
 
+if (!config.split) {
+    document.getElementById("splitButton").setAttribute("disabled", "");
+}
+
 window.onload = function () {
     // load series
     axios.get(config.servers.query + '/studies/' + global.getParams("id"), {
@@ -31,7 +35,12 @@ window.onload = function () {
             // setup return button
             document.getElementById("returnButton").innerHTML = locale.ret;
             document.getElementById("returnButton").onclick = function () {
-                window.location.href = "./index.html";
+                let link = "./index.html?patName=" + global.getParams("patName");
+                link += "&accessionNo=" + global.getParams("accessionNo");
+                link += "&patientId=" + global.getParams("patientId");
+                link += "&studyDate=" + global.getParams("studyDate");
+                link += "&modality=" + global.getParams("modality");
+                window.location.href = link;
             }
 
             // studies level

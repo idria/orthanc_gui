@@ -8,6 +8,7 @@ exports.es = {
     accessionNo: "No. de Acceso",
     accessionNoLabel: "Cambiar No. de Acceso:",
     patientId: "ID de Paciente",
+    patientIdLabel: "Cambiar ID de Paciente:",
     studyDate: "Fecha",
     studyDateFormat: "(DD/MM/AAAA)",
     modality: "Modalidad",
@@ -31,7 +32,10 @@ exports.es = {
     splitMessage: "1. Verifique que los datos del estudio.</br>2. Seleccione las series que desea separar a un nuevo estudio.</br>3. Click en separar.</br>4. Ingrese el Número de Acceso del estudio nuevo.",
     modified: "Modificado!",
     deleted: "Borrado!",
-    deleteQuestion: "Desea borrar el estudio seleccionado?"
+    deleteQuestion: "Desea borrar el estudio seleccionado?",
+    errModifyPatient: "No se puede modificar el paciente. Tiene enlazado mas de un estudio.",
+    exportLabel: "Exportar",
+    series: "Series"
 };
 
 exports.en =  {
@@ -44,6 +48,7 @@ exports.en =  {
     accessionNo: "Accession No.",
     accessionNoLabel: "Change Accession No.:",
     patientId: "Patient ID",
+    patientIdLabel: "Change Patient ID:",
     studyDate: "Date",
     studyDateFormat: "(DD/MM/YYYY)",
     modality: "Modality",
@@ -67,5 +72,8 @@ exports.en =  {
     splitMessage: "1. Verify study data.</br>2. Select series to split in a new study.</br>3. Click split.</br>4. Enter the new study Accession Number.",
     modified: "Modified!",
     deleted: "Deleted!",
-    deleteQuestion: "Do you want to delete selected study?"
+    deleteQuestion: "Do you want to delete selected study?",
+    errModifyPatient: "Can't modify patient. Has more than one study linked.",
+    exportLabel: "Export",
+    series: "Series"
 };

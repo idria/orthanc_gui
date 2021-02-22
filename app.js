@@ -30,6 +30,26 @@ document.getElementById("all").innerHTML = locale.all;
 document.getElementById("searchLabel").innerHTML = locale.search;
 document.getElementById("cleanButton").innerHTML = locale.clean;
 document.getElementById("destLabel").innerHTML = locale.dest;
+document.getElementById("exportButton").innerHTML = locale.exportLabel;
+
+// fill with params
+let patName = global.getParams("patName");
+let accessionNo = global.getParams("accessionNo");
+let patientId = global.getParams("patientId");
+let studyDate = global.getParams("studyDate");
+let modality = global.getParams("modality");
+
+document.getElementById("patName").value = patName;
+document.getElementById("accessionNo").value = accessionNo;
+document.getElementById("patientId").value = patientId;
+document.getElementById("studyDate").value = studyDate;
+if (modality) {
+    document.getElementById("modality").value = modality;
+}
+
+if (patName || accessionNo || patientId || studyDate) {
+    showStudies();
+}
 
 // clean all values
 document.getElementById("cleanButton").onclick = function () {
@@ -76,32 +96,108 @@ function checkProgress(id) {
                 }
             }
         }
-    }).catch(function (err) {
+    }).catch(function () {
         document.getElementById("progress").classList.add("bg-danger");
         document.getElementById("studiesTable").removeAttribute("disabled", "");
-        alert(locale.connectionError + err);
+        setTimeout(checkProgress(id), 5000);
     });
 }
 
 // modify accession number
 function changeAccesionNo(id) {
-    if (config.change) {
+    if (config.changeAccessionNo) {
         prompt("Orthanc GUI", locale.accessionNoLabel).then(text => {
             if (text) {
-                axios.post(config.servers.query + '/studies/' + id + '/modify', {
+                axios.post(config.servers.store + '/studies/' + id + '/modify', {
+                    "Asynchronous": true,
                     "Replace": {
-                        "AccessionNumber": text
-                    }
+                        "AccessionNumber": text.trim()
+                    },
+                    "Force":true
                 }, {
                     httpsAgent: new https.Agent({
                         rejectUnauthorized: false
                     })
                 }).then(function (res) {
+                    if (res.data.ID !== undefined) {
+                        // clean progress status
+                        document.getElementById("progress").classList.remove("bg-success");
+                        document.getElementById("progress").classList.remove("bg-danger");
+                        document.getElementById("studiesTable").setAttribute("disabled", "");
+                        // progress bar
+                        checkProgress(res.data.ID);
+                    } else {
+                        alert(locale.invalidResp);
+                    }
+                }).catch(function (err) {
+                    alert(locale.connectionError + err);
+                });
+            }
+        });
+    } else {
+        alert(locale.errChange);
+    }
+}
+
+// modify patient id
+function changePatientId(id) {
+    if (config.changePatientId) {
+        prompt("Orthanc GUI", locale.patientIdLabel).then(text => {
+            if (text) {
+                // get study patient
+                axios.get(config.servers.store + '/studies/' + id, {
+                    httpsAgent: new https.Agent({
+                        rejectUnauthorized: false
+                    })
+                }).then(function (res) {
                     if (res.status == 200) {
-                        alert(local.modified);
-                        searchStudies();
-                    }else{
-                        alert(local.invalidResp);
+                        let patient = res.data.ParentPatient;
+
+                        // search if patient has more studies
+                        axios.get(config.servers.store + '/patients/' + patient, {
+                            httpsAgent: new https.Agent({
+                                rejectUnauthorized: false
+                            })
+                        }).then(function (res) {
+                            if (res.data.Studies !== undefined) {
+                                if (res.data.Studies.length == 1) {
+
+                                    // modify patient id
+                                    axios.post(config.servers.store + '/patients/' + patient + '/modify', {
+                                        "Asynchronous": true,
+                                        "Replace": {
+                                            "PatientID": text.trim()
+                                        },
+                                        "Force":true
+                                    }, {
+                                        httpsAgent: new https.Agent({
+                                            rejectUnauthorized: false
+                                        })
+                                    }).then(function (res) {
+                                        if (res.data.ID !== undefined) {
+                                            // clean progress status
+                                            document.getElementById("progress").classList.remove("bg-success");
+                                            document.getElementById("progress").classList.remove("bg-danger");
+                                            document.getElementById("studiesTable").setAttribute("disabled", "");
+                                            // progress bar
+                                            checkProgress(res.data.ID);
+                                        } else {
+                                            alert(locale.invalidResp);
+                                        }
+                                    }).catch(function (err) {
+                                        alert(locale.connectionError + err);
+                                    });
+                                } else {
+                                    alert(locale.errModifyPatient);
+                                }
+                            } else {
+                                alert(locale.invalidResp);
+                            }
+                        }).catch(function (err) {
+                            alert(locale.connectionError + err);
+                        });
+                    } else {
+                        alert(locale.errChange);
                     }
                 }).catch(function (err) {
                     alert(locale.connectionError + err);
@@ -114,18 +210,21 @@ function changeAccesionNo(id) {
 }
 
 // delete study
-function deleteStudy(id) {
+function deleteStudy(elemnt, id) {
     if (confirm(locale.deleteQuestion)) {
-        axios.delete(config.servers.query + '/studies/' + id, {
+        elemnt.setAttribute("disabled", "");
+
+        axios.delete(config.servers.store + '/studies/' + id, {
             httpsAgent: new https.Agent({
                 rejectUnauthorized: false
             })
         }).then(function (res) {
             if (res.status == 200) {
                 alert(locale.deleted);
-                searchStudies();
+                showStudies();
             }else{
                 alert(locale.invalidResp);
+                elemnt.removeAttribute("disabled", "");
             }
         }).catch(function (err) {
             alert(locale.connectionError + err);
@@ -179,23 +278,29 @@ function sendStudy(id) {
 
 // open split page
 function splitStudy(id) {
-    window.location.href = "./split.html?id=" + id;
+    let link = "./split.html?id=" + id;
+    link += "&patName=" + document.getElementById("patName").value.trim();
+    link += "&accessionNo=" + document.getElementById("accessionNo").value.trim();
+    link += "&patientId=" + document.getElementById("patientId").value.trim();
+    link += "&studyDate=" + document.getElementById("studyDate").value.trim();
+    link += "&modality=" + document.getElementById("modality").value.trim();
+    window.location.href = link;
 }
 
 // search studies
-function searchStudies() {
+function searchStudies(cbOk) {
     blockForSeach();
 
-    let inputName = document.getElementById("patName").value;
-    let inputAccession = document.getElementById("accessionNo").value;
-    let inputID = document.getElementById("patientId").value;
-    let studyDate = document.getElementById("studyDate").value;
-    let modality = document.getElementById("modality").value;
+    let inputName = document.getElementById("patName").value.trim();
+    let inputAccession = document.getElementById("accessionNo").value.trim();
+    let inputID = document.getElementById("patientId").value.trim();
+    let studyDate = document.getElementById("studyDate").value.trim();
+    let modality = document.getElementById("modality").value.trim();
 
     let query = new Object();
     query["Level"] = "Study";
     query["Expand"] = true;
-    query["Limit"] = 51;
+    query["Limit"] = config.limit;
     query["Query"] = new Object();
 
     if (inputName !== "") {
@@ -232,68 +337,8 @@ function searchStudies() {
         })
     }).then(function (res) {
         if (res.status == 200) {
-            let table = "";
-
-            for (let i = 0; i < res.data.length; i++) {
-                let study = global.readStudiesResp(res.data[i]);
-
-                // render modalities async
-                let allGets = [];
-                for (let i = 0; i < study.series.length; i++) {
-                    allGets.push(
-                        axios.get(config.servers.query + '/series/' + study.series[i], {
-                            httpsAgent: new https.Agent({
-                                rejectUnauthorized: false
-                            })
-                        })
-                    );
-                }
-
-                axios.all(allGets).then(axios.spread(function (...res) {
-                    let modsInStudy = [];
-                    for (let i = 0; i < res.length; i++) {
-                        if (res[i].status == 200) {
-                            if (res[i].data.MainDicomTags !== undefined) {
-                                let modality = res[i].data.MainDicomTags.Modality;
-                                if (!modsInStudy.includes(modality) && modality !== "PR") {
-                                    modsInStudy.push(modality);
-                                }
-                            } else {
-                                alert(locale.invalidResponse);
-                            }
-                        }
-                    }
-                    document.getElementById("MOD_" + study.studyHash).innerHTML = modsInStudy;
-                })).catch(function (err) {
-                    alert(locale.connectionError + err);
-                    readyForSearch();
-                    return;
-                });
-
-                // draw row
-                table += '<tr>';
-                table += '<th scope="row">' + i + '</th>';
-                table += '<td>' + study.name + '</td>';
-                table += '<td onclick="changeAccesionNo(' + "'" + study.studyHash + "'" + ');">' + study.accessionNo + '</td>';
-                table += '<td>' + study.patientId + '</td>';
-                table += '<td>' + study.studyDate + '</td>';
-                table += '<td id="MOD_' + study.studyHash + '"></td>';
-                table += '<td>' + study.description + '</td>';
-                table += '<td>';
-                table += '<button class="btn btn-primary" onclick="sendStudy(' + "'" + study.studyHash + "'" + ');" style="margin-right: 5px;">';
-                table += locale.send + '</button>';
-                table += '<button class="btn btn-primary" onclick="openStudy(' + "'" + study.studyHash + "'" + ');" style="margin-right: 5px;">';
-                table += locale.open + '</button>';
-                table += '<button class="btn btn-primary" onclick="splitStudy(' + "'" + study.studyHash + "'" + ');" style="margin-right: 5px;" ';
-                table += ((config.split) ? '' : 'disabled') + '>' + locale.split + '</button>';
-                table += '<button class="btn btn-danger" onclick="deleteStudy(' + "'" + study.studyHash + "'" + ');" style="margin-right: 5px;" ';
-                table += ((config.delete) ? '' : 'disabled') + '>' + locale.delete + '</button>';
-                table += '</td>';
-                table += '</tr>';
-            }
-
             readyForSearch();
-            document.getElementById("studiesTableBody").innerHTML = table;
+            cbOk(res);
         }
     }).catch(function (err) {
         alert(locale.connectionError + err);
@@ -301,4 +346,92 @@ function searchStudies() {
     });
 }
 
-document.getElementById("searchButton").onclick = searchStudies;
+function showStudies() {
+    searchStudies(function(res) {
+        let table = "";
+
+        for (let i = 0; i < res.data.length; i++) {
+            let study = global.readStudiesResp(res.data[i]);
+
+            // render modalities async
+            let allGets = [];
+            for (let i = 0; i < study.series.length; i++) {
+                allGets.push(
+                    axios.get(config.servers.query + '/series/' + study.series[i], {
+                        httpsAgent: new https.Agent({
+                            rejectUnauthorized: false
+                        })
+                    })
+                );
+            }
+
+            axios.all(allGets).then(axios.spread(function (...res) {
+                let modsInStudy = [];
+                for (let i = 0; i < res.length; i++) {
+                    if (res[i].status == 200) {
+                        if (res[i].data.MainDicomTags !== undefined) {
+                            let modality = res[i].data.MainDicomTags.Modality;
+                            if (!modsInStudy.includes(modality) && modality !== "PR") {
+                                modsInStudy.push(modality);
+                            }
+                        } else {
+                            alert(locale.invalidResponse);
+                        }
+                    }
+                }
+                document.getElementById("MOD_" + study.studyHash).innerHTML = modsInStudy;
+            })).catch(function (err) {
+                alert(locale.connectionError + err);
+                readyForSearch();
+                return;
+            });
+
+            // draw row
+            table += '<tr>';
+            table += '<th scope="row">' + i + '</th>';
+            table += '<td>' + study.name + '</td>';
+            table += '<td onclick="changeAccesionNo(' + "'" + study.studyHash + "'" + ');">' + study.accessionNo + '</td>';
+            table += '<td onclick="changePatientId(' + "'" + study.studyHash + "'" + ');">' + study.patientId + '</td>';
+            table += '<td>' + study.studyDate + '</td>';
+            table += '<td id="MOD_' + study.studyHash + '"></td>';
+            table += '<td>' + study.description + '</td>';
+            table += '<td>';
+            table += '<button class="btn btn-primary" onclick="sendStudy(' + "'" + study.studyHash + "'" + ');" style="margin-right: 5px;">';
+            table += locale.send + '</button>';
+            table += '<button class="btn btn-primary" onclick="openStudy(' + "'" + study.studyHash + "'" + ');" style="margin-right: 5px;">';
+            table += locale.open + '</button>';
+            table += '<button class="btn btn-primary" onclick="splitStudy(' + "'" + study.studyHash + "'" + ');" style="margin-right: 5px;">';
+            table += locale.series + '</button>';
+            table += '<button class="btn btn-danger" onclick="deleteStudy(this, ' + "'" + study.studyHash + "'" + ');" style="margin-right: 5px;" ';
+            table += ((config.delete) ? '' : 'disabled') + '>' + locale.delete + '</button>';
+            table += '</td>';
+            table += '</tr>';
+        }
+
+        document.getElementById("studiesTableBody").innerHTML = table;
+    });
+}
+
+document.getElementById("searchButton").onclick = showStudies;
+
+document.getElementById("exportButton").onclick = function() {
+    searchStudies(function(res) {
+        let file = "Name,Patient ID,Accession No,Study Date, Description\n";
+        for (let i = 0; i < res.data.length; i++) {
+            let study = global.readStudiesResp(res.data[i]);
+            file += study.name.trim() + "," + study.patientId.trim() + "," + study.accessionNo.trim() + ",";
+            file += study.studyDate + "," + study.description.trim() + "\n";
+        }
+
+        var element = document.createElement('a');
+        element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(file));
+        element.setAttribute('download', 'orthanc_export.csv');
+      
+        element.style.display = 'none';
+        document.body.appendChild(element);
+      
+        element.click();
+      
+        document.body.removeChild(element);
+    });
+}

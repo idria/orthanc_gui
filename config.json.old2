@@ -1,0 +1,19 @@
+{
+    "locale": "es",
+    "delete": true,
+    "changeAccessionNo": true,
+    "changePatientId": true,
+    "split": true,
+    "limit": 401,
+    "servers": {
+        "query": "http://10.21.0.2:8042",
+        "store": "http://127.0.0.1:8042",
+        "viewer": "http://127.0.0.1:8042"
+    },
+    "destinations": [
+        {
+            "label": "PORTAL",
+            "name": "PORTAL"
+        }
+    ]
+}
