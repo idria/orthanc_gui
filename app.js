@@ -9,6 +9,8 @@ const global = require('./global.js');
 let config = global.getConfig();
 let locale = global.getLocale(config);
 
+let globalStudies = [];
+
 // destinations
 for (let i = 0; i < config.destinations.length; i++) {
     document.getElementById("export").innerHTML += "<option>" + config.destinations[i].label + "</option>";
@@ -71,6 +73,27 @@ function readyForSearch() {
     document.getElementById("searchButton").removeAttribute("disabled", "");
 }
 
+// block all and ping audit server
+blockForSeach();
+
+global.sendAudit(config, "", () => {
+    readyForSearch();
+}, () => {
+    alert(locale.auditConnectionError);
+});
+
+axios.get(config.audit, {
+    httpsAgent: new https.Agent({
+        rejectUnauthorized: false
+    })
+}).then(function (res) {
+    if (res.status == 200) {
+        readyForSearch();
+    }
+}).catch(function () {
+    alert(locale.auditConnectionError);
+});
+
 // progress bar 
 function checkProgress(id) {
     axios.get(config.servers.store + '/jobs/' + id, {
@@ -108,6 +131,7 @@ function changeAccesionNo(id) {
     if (config.changeAccessionNo) {
         prompt("Orthanc GUI", locale.accessionNoLabel).then(text => {
             if (text) {
+                // execute change
                 axios.post(config.servers.store + '/studies/' + id + '/modify', {
                     "Asynchronous": true,
                     "Replace": {
@@ -126,6 +150,12 @@ function changeAccesionNo(id) {
                         document.getElementById("studiesTable").setAttribute("disabled", "");
                         // progress bar
                         checkProgress(res.data.ID);
+                        // send audit
+                        let message = global.getStudy(globalStudies, id);
+                        message.user = config.user;
+                        message.action = 'changeAccessionNo';
+                        message.newValue = text.trim();
+                        global.sendAudit(config, message);
                     } else {
                         alert(locale.invalidResp);
                     }
@@ -161,7 +191,6 @@ function changePatientId(id) {
                         }).then(function (res) {
                             if (res.data.Studies !== undefined) {
                                 if (res.data.Studies.length == 1) {
-
                                     // modify patient id
                                     axios.post(config.servers.store + '/patients/' + patient + '/modify', {
                                         "Asynchronous": true,
@@ -181,6 +210,12 @@ function changePatientId(id) {
                                             document.getElementById("studiesTable").setAttribute("disabled", "");
                                             // progress bar
                                             checkProgress(res.data.ID);
+                                            // send audit
+                                            let message = global.getStudy(globalStudies, id);
+                                            message.user = config.user;
+                                            message.action = 'changePatientId';
+                                            message.newValue = text.trim();
+                                            global.sendAudit(config, message);
                                         } else {
                                             alert(locale.invalidResp);
                                         }
@@ -222,6 +257,12 @@ function deleteStudy(elemnt, id) {
             if (res.status == 200) {
                 alert(locale.deleted);
                 showStudies();
+
+                // send audit
+                let message = global.getStudy(globalStudies, id);
+                message.user = config.user;
+                message.action = 'deleteStudy';
+                global.sendAudit(config, message);
             }else{
                 alert(locale.invalidResp);
                 elemnt.removeAttribute("disabled", "");
@@ -266,6 +307,11 @@ function sendStudy(id) {
                     document.getElementById("studiesTable").setAttribute("disabled", "");
                     // progress bar
                     checkProgress(res.data.ID);
+                    // send audit
+                    let message = global.getStudy(globalStudies, id);
+                    message.user = config.user;
+                    message.action = 'sendStudy';
+                    global.sendAudit(config, message);
                 } else {
                     alert(locale.invalidResp);
                 }
@@ -349,9 +395,15 @@ function searchStudies(cbOk) {
 function showStudies() {
     searchStudies(function(res) {
         let table = "";
+        globalStudies = [];
 
         for (let i = 0; i < res.data.length; i++) {
             let study = global.readStudiesResp(res.data[i]);
+
+            // send to elastic
+            let elasticStudy = Object.assign({}, study);
+            delete elasticStudy.studyDate;
+            globalStudies.push(elasticStudy);
 
             // render modalities async
             let allGets = [];
@@ -367,19 +419,22 @@ function showStudies() {
 
             axios.all(allGets).then(axios.spread(function (...res) {
                 let modsInStudy = [];
+                let stationName = '';
                 for (let i = 0; i < res.length; i++) {
                     if (res[i].status == 200) {
                         if (res[i].data.MainDicomTags !== undefined) {
                             let modality = res[i].data.MainDicomTags.Modality;
+                            stationName = res[i].data.MainDicomTags.StationName;
                             if (!modsInStudy.includes(modality) && modality !== "PR") {
                                 modsInStudy.push(modality);
                             }
-                        } else {
-                            alert(locale.invalidResponse);
                         }
                     }
                 }
                 document.getElementById("MOD_" + study.studyHash).innerHTML = modsInStudy;
+                global.addStudyObj(globalStudies, study.studyHash, "modInStudy", modsInStudy);
+                global.addStudyObj(globalStudies, study.studyHash, "stationName", stationName);
+
             })).catch(function (err) {
                 alert(locale.connectionError + err);
                 readyForSearch();

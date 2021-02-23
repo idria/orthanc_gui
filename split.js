@@ -9,6 +9,8 @@ const global = require('./global.js');
 let config = global.getConfig();
 let locale = global.getLocale(config);
 
+let globalStudy = {};
+
 // setup locale names
 document.getElementById("colSeriesNoLabel").innerHTML = locale.seriesNo;
 document.getElementById("colSeriesDescLabel").innerHTML = locale.seriesDesc;
@@ -24,7 +26,7 @@ if (!config.split) {
 
 window.onload = function () {
     // load series
-    axios.get(config.servers.query + '/studies/' + global.getParams("id"), {
+    axios.get(config.servers.store + '/studies/' + global.getParams("id"), {
         httpsAgent: new https.Agent({
             rejectUnauthorized: false
         })
@@ -45,6 +47,7 @@ window.onload = function () {
 
             // studies level
             let study = global.readStudiesResp(res.data);
+            globalStudy = study;
 
             document.getElementById("accessionNo").innerHTML = locale.accessionNo + ': ' + study.accessionNo;
             document.getElementById("patientName").innerHTML = locale.patientName + ': ' + study.name;
@@ -107,7 +110,7 @@ window.onload = function () {
                     axios.post(config.servers.query + '/studies/' + global.getParams("id") + '/split', {
                         "Series": splitSeries,
                         "Replace": {
-                            "AccessionNumber": text
+                            "AccessionNumber": text.trim()
                         }
                     }, {
                         httpsAgent: new https.Agent({
@@ -116,6 +119,12 @@ window.onload = function () {
                     }).then(function (res) {
                         if (res.status == 200) {
                             alert(locale.modified);
+                            // send audit
+                            let message = globalStudy;
+                            message.user = config.user;
+                            message.action = 'splitStudy';
+                            message.newValue = text.trim();
+                            global.sendAudit(config, message);
                         } else {
                             alert(locale.invalidResp);
                         }

@@ -35,7 +35,8 @@ exports.es = {
     deleteQuestion: "Desea borrar el estudio seleccionado?",
     errModifyPatient: "No se puede modificar el paciente. Tiene enlazado mas de un estudio.",
     exportLabel: "Exportar",
-    series: "Series"
+    series: "Series",
+    auditConnectionError: "No hay conexión con el servidor de auditoria."
 };
 
 exports.en =  {
@@ -75,5 +76,6 @@ exports.en =  {
     deleteQuestion: "Do you want to delete selected study?",
     errModifyPatient: "Can't modify patient. Has more than one study linked.",
     exportLabel: "Export",
-    series: "Series"
+    series: "Series",
+    auditConnectionError: "No connection to audit server."
 };
