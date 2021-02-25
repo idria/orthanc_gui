@@ -1,4 +1,3 @@
-const fs = require('fs');
 const axios = require('axios');
 const https = require('https');
 
@@ -60,8 +59,7 @@ function changeAccesionNo(id) {
                     "Asynchronous": true,
                     "Replace": {
                         "AccessionNumber": text.trim()
-                    },
-                    "Force":true
+                    }
                 }, {
                     httpsAgent: new https.Agent({
                         rejectUnauthorized: false

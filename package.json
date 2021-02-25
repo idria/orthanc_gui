@@ -1,22 +1,23 @@
 {
   "name": "orthanc_gui",
   "productName": "orthanc_gui",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Simple Orthanc GUI client.",
   "repository": "https://github.com/idria/orthanc_gui",
   "main": "main.js",
   "scripts": {
     "start": "electron ."
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "Orthanc",
+    "GUI"
+  ],
+  "author": "Idria",
   "license": "ISC",
   "devDependencies": {
     "electron": "^11.2.3"
   },
   "dependencies": {
-    "@electron-forge/publisher-github": "^6.0.0-beta.54",
-    "axios": "^0.21.1",
-    "update-electron-app": "^2.0.1"
+    "axios": "^0.21.1"
   }
 }

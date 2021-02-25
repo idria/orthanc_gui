@@ -1,16 +1,13 @@
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
 const { app, BrowserWindow, dialog } = require('electron');
-const updateApp = require('update-electron-app');
 const fs = require('fs');
 
-function startApp() {
-  // updater
-  updateApp({
-      updateInterval: '1 hour',
-      notifyUser: true
-  });
+// create user data path
+let configPath = app.getPath('userData') + '\\config.json';
+fs.writeFileSync("./config.path", configPath);
 
+function startApp() {
   // create window
   const win = new BrowserWindow({
     width: 1200,
@@ -29,7 +26,7 @@ function startApp() {
   }
 
   // check if config file exists
-  if (!fs.existsSync('./config.json')) {
+  if (!fs.existsSync(configPath)) {
     dialog.showOpenDialog({
       title: 'Choose a file:',
       properties: ['openFile'],
@@ -39,7 +36,7 @@ function startApp() {
         app.quit();
       } else {
         let newConfig = JSON.parse(fs.readFileSync(file.filePaths[0]));
-        fs.writeFileSync('./config.json', JSON.stringify(newConfig));
+        fs.writeFileSync(configPath, JSON.stringify(newConfig));
         startWindow();
       }
     }).catch(() => {

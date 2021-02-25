@@ -32,13 +32,14 @@ exports.confirm = confirm;
 
 exports.getConfig = function (cbOk, cbErr) {
     try {
-        let config = JSON.parse(fs.readFileSync('./config.json'));
+        let configPath = fs.readFileSync('./config.path');
+        let config = JSON.parse(fs.readFileSync(configPath));
 
         if(config.user == undefined) {
             prompt('Enter user name:', (value) => {
                 if (value) {
                     config.user = value;
-                    fs.writeFileSync('./config.json', JSON.stringify(config));
+                    fs.writeFileSync(configPath, JSON.stringify(config));
                     if (cbOk) { 
                         cbOk(config);
                     }
