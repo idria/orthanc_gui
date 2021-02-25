@@ -1,7 +1,9 @@
 {
   "name": "orthanc_gui",
+  "productName": "orthanc_gui",
   "version": "1.0.0",
-  "description": "",
+  "description": "Simple Orthanc GUI client.",
+  "repository": "https://github.com/idria/orthanc_gui",
   "main": "main.js",
   "scripts": {
     "start": "electron ."
@@ -13,7 +15,8 @@
     "electron": "^11.2.3"
   },
   "dependencies": {
+    "@electron-forge/publisher-github": "^6.0.0-beta.54",
     "axios": "^0.21.1",
-    "native-prompt": "^2.1.4"
+    "update-electron-app": "^2.0.1"
   }
 }

@@ -1,66 +1,11 @@
 const fs = require('fs');
 const axios = require('axios');
 const https = require('https');
-const { dialog } = require('electron');
-const prompt = require('native-prompt')
 
 const global = require('./global.js');
 
-let config = global.getConfig();
-let locale = global.getLocale(config);
-
-let globalStudies = [];
-
-// destinations
-for (let i = 0; i < config.destinations.length; i++) {
-    document.getElementById("export").innerHTML += "<option>" + config.destinations[i].label + "</option>";
-}
-
-// setup locale names
-document.getElementById("patNameLabel").innerHTML = locale.patientName;
-document.getElementById("colNameLabel").innerHTML = locale.patientName;
-document.getElementById("accessionNoLabel").innerHTML = locale.accessionNo;
-document.getElementById("colAccessionNoLabel").innerHTML = locale.accessionNo;
-document.getElementById("patientIdLabel").innerHTML = locale.patientId;
-document.getElementById("colPatientIdLabel").innerHTML = locale.patientId;
-document.getElementById("studyDateLabel").innerHTML = locale.studyDate + " " + locale.studyDateFormat;
-document.getElementById("colStudyDateLabel").innerHTML = locale.studyDate;
-document.getElementById("modalityLabel").innerHTML = locale.modality;
-document.getElementById("colModalityLabel").innerHTML = locale.modality;
-document.getElementById("colDescription").innerHTML = locale.desc;
-document.getElementById("all").innerHTML = locale.all;
-document.getElementById("searchLabel").innerHTML = locale.search;
-document.getElementById("cleanButton").innerHTML = locale.clean;
-document.getElementById("destLabel").innerHTML = locale.dest;
-document.getElementById("exportButton").innerHTML = locale.exportLabel;
-
-// fill with params
-let patName = global.getParams("patName");
-let accessionNo = global.getParams("accessionNo");
-let patientId = global.getParams("patientId");
-let studyDate = global.getParams("studyDate");
-let modality = global.getParams("modality");
-
-document.getElementById("patName").value = patName;
-document.getElementById("accessionNo").value = accessionNo;
-document.getElementById("patientId").value = patientId;
-document.getElementById("studyDate").value = studyDate;
-if (modality) {
-    document.getElementById("modality").value = modality;
-}
-
-if (patName || accessionNo || patientId || studyDate) {
-    showStudies();
-}
-
-// clean all values
-document.getElementById("cleanButton").onclick = function () {
-    document.getElementById("patName").value = "";
-    document.getElementById("accessionNo").value = "";
-    document.getElementById("patientId").value = "";
-    document.getElementById("studyDate").value = "";
-    document.getElementById("modality").value = locale.all;
-}
+let locale;
+let config;
 
 // disable and enable search buttons
 function blockForSeach() {
@@ -72,27 +17,6 @@ function readyForSearch() {
     document.getElementById("searchLoading").setAttribute("hidden", "");
     document.getElementById("searchButton").removeAttribute("disabled", "");
 }
-
-// block all and ping audit server
-blockForSeach();
-
-global.sendAudit(config, "", () => {
-    readyForSearch();
-}, () => {
-    alert(locale.auditConnectionError);
-});
-
-axios.get(config.audit, {
-    httpsAgent: new https.Agent({
-        rejectUnauthorized: false
-    })
-}).then(function (res) {
-    if (res.status == 200) {
-        readyForSearch();
-    }
-}).catch(function () {
-    alert(locale.auditConnectionError);
-});
 
 // progress bar 
 function checkProgress(id) {
@@ -112,7 +36,7 @@ function checkProgress(id) {
                     if (res.data.ErrorCode) {
                         document.getElementById("progress").classList.add("bg-danger");
                         document.getElementById("studiesTable").removeAttribute("disabled", "");
-                        alert(locale.sendError + res.data.ErrorDescription);
+                        global.alert(locale.sendError + res.data.ErrorDescription);
                     } else {
                         setTimeout(checkProgress(id), 5000);
                     }
@@ -129,7 +53,7 @@ function checkProgress(id) {
 // modify accession number
 function changeAccesionNo(id) {
     if (config.changeAccessionNo) {
-        prompt("Orthanc GUI", locale.accessionNoLabel).then(text => {
+        global.prompt(locale.accessionNoLabel, (text) => {
             if (text) {
                 // execute change
                 axios.post(config.servers.store + '/studies/' + id + '/modify', {
@@ -157,22 +81,22 @@ function changeAccesionNo(id) {
                         message.newValue = text.trim();
                         global.sendAudit(config, message);
                     } else {
-                        alert(locale.invalidResp);
+                        global.alert(locale.invalidResp);
                     }
                 }).catch(function (err) {
-                    alert(locale.connectionError + err);
+                    global.alert(locale.connectionError + err);
                 });
             }
         });
     } else {
-        alert(locale.errChange);
+        global.alert(locale.errChange);
     }
 }
 
 // modify patient id
 function changePatientId(id) {
     if (config.changePatientId) {
-        prompt("Orthanc GUI", locale.patientIdLabel).then(text => {
+        global.prompt(locale.patientIdLabel, (text) => {
             if (text) {
                 // get study patient
                 axios.get(config.servers.store + '/studies/' + id, {
@@ -217,60 +141,62 @@ function changePatientId(id) {
                                             message.newValue = text.trim();
                                             global.sendAudit(config, message);
                                         } else {
-                                            alert(locale.invalidResp);
+                                            global.alert(locale.invalidResp);
                                         }
                                     }).catch(function (err) {
-                                        alert(locale.connectionError + err);
+                                        global.alert(locale.connectionError + err);
                                     });
                                 } else {
-                                    alert(locale.errModifyPatient);
+                                    global.alert(locale.errModifyPatient);
                                 }
                             } else {
-                                alert(locale.invalidResp);
+                                global.alert(locale.invalidResp);
                             }
                         }).catch(function (err) {
-                            alert(locale.connectionError + err);
+                            global.alert(locale.connectionError + err);
                         });
                     } else {
-                        alert(locale.errChange);
+                        global.alert(locale.errChange);
                     }
                 }).catch(function (err) {
-                    alert(locale.connectionError + err);
+                    global.alert(locale.connectionError + err);
                 });
             }
         });
     } else {
-        alert(locale.errChange);
+        global.alert(locale.errChange);
     }
 }
 
 // delete study
 function deleteStudy(elemnt, id) {
-    if (confirm(locale.deleteQuestion)) {
-        elemnt.setAttribute("disabled", "");
-
-        axios.delete(config.servers.store + '/studies/' + id, {
-            httpsAgent: new https.Agent({
-                rejectUnauthorized: false
-            })
-        }).then(function (res) {
-            if (res.status == 200) {
-                alert(locale.deleted);
-                showStudies();
-
-                // send audit
-                let message = global.getStudy(globalStudies, id);
-                message.user = config.user;
-                message.action = 'deleteStudy';
-                global.sendAudit(config, message);
-            }else{
-                alert(locale.invalidResp);
-                elemnt.removeAttribute("disabled", "");
-            }
-        }).catch(function (err) {
-            alert(locale.connectionError + err);
-        });
-    }
+    global.confirm(locale.deleteQuestion, (value) => {
+        if (value) {
+            elemnt.setAttribute("disabled", "");
+    
+            axios.delete(config.servers.store + '/studies/' + id, {
+                httpsAgent: new https.Agent({
+                    rejectUnauthorized: false
+                })
+            }).then(function (res) {
+                if (res.status == 200) {
+                    global.alert(locale.deleted);
+                    showStudies();
+    
+                    // send audit
+                    let message = global.getStudy(globalStudies, id);
+                    message.user = config.user;
+                    message.action = 'deleteStudy';
+                    global.sendAudit(config, message);
+                }else{
+                    global.alert(locale.invalidResp);
+                    elemnt.removeAttribute("disabled", "");
+                }
+            }).catch(function (err) {
+                global.alert(locale.connectionError + err);
+            });
+        }
+    });
 }
 
 // open osimis viewer
@@ -289,37 +215,39 @@ function sendStudy(id) {
         }
     }
 
-    if (confirm("Desea enviar el estudio seleccionado a " + exportDest)) {
-        axios.post(config.servers.store + '/modalities/' + destOrthanc + '/store', {
-            "Asynchronous": true,
-            "Permissive": true,
-            "Resources": [id],
-        }, {
-            httpsAgent: new https.Agent({
-                rejectUnauthorized: false
-            })
-        }).then(function (res) {
-            if (res.status == 200) {
-                if (res.data.ID !== undefined) {
-                    // clean progress status
-                    document.getElementById("progress").classList.remove("bg-success");
-                    document.getElementById("progress").classList.remove("bg-danger");
-                    document.getElementById("studiesTable").setAttribute("disabled", "");
-                    // progress bar
-                    checkProgress(res.data.ID);
-                    // send audit
-                    let message = global.getStudy(globalStudies, id);
-                    message.user = config.user;
-                    message.action = 'sendStudy';
-                    global.sendAudit(config, message);
-                } else {
-                    alert(locale.invalidResp);
+    global.confirm(locale.sendStudyConfirm + exportDest, (value) => {
+        if (value) {
+            axios.post(config.servers.store + '/modalities/' + destOrthanc + '/store', {
+                "Asynchronous": true,
+                "Permissive": true,
+                "Resources": [id],
+            }, {
+                httpsAgent: new https.Agent({
+                    rejectUnauthorized: false
+                })
+            }).then(function (res) {
+                if (res.status == 200) {
+                    if (res.data.ID !== undefined) {
+                        // clean progress status
+                        document.getElementById("progress").classList.remove("bg-success");
+                        document.getElementById("progress").classList.remove("bg-danger");
+                        document.getElementById("studiesTable").setAttribute("disabled", "");
+                        // progress bar
+                        checkProgress(res.data.ID);
+                        // send audit
+                        let message = global.getStudy(globalStudies, id);
+                        message.user = config.user;
+                        message.action = 'sendStudy';
+                        global.sendAudit(config, message);
+                    } else {
+                        global.alert(locale.invalidResp);
+                    }
                 }
-            }
-        }).catch(function (err) {
-            alert(locale.connectionError + err);
-        });
-    }
+            }).catch(function (err) {
+                global.alert(locale.connectionError + err);
+            });
+        }
+    });
 }
 
 // open split page
@@ -367,7 +295,7 @@ function searchStudies(cbOk) {
     }
 
     if (Object.keys(query["Query"]).length === 0) {
-        alert(locale.empty);
+        global.alert(locale.empty);
         readyForSearch();
         return;
     }
@@ -387,7 +315,7 @@ function searchStudies(cbOk) {
             cbOk(res);
         }
     }).catch(function (err) {
-        alert(locale.connectionError + err);
+        global.alert(locale.connectionError + err);
         readyForSearch();
     });
 }
@@ -436,7 +364,7 @@ function showStudies() {
                 global.addStudyObj(globalStudies, study.studyHash, "stationName", stationName);
 
             })).catch(function (err) {
-                alert(locale.connectionError + err);
+                global.alert(locale.connectionError + err);
                 readyForSearch();
                 return;
             });
@@ -467,26 +395,106 @@ function showStudies() {
     });
 }
 
-document.getElementById("searchButton").onclick = showStudies;
+global.getConfig((inputConfig) => {
+    let globalStudies = [];
+    config = inputConfig;
+    locale = global.getLocale(config);
+    
+    // destinations
+    for (let i = 0; i < config.destinations.length; i++) {
+        document.getElementById("export").innerHTML += "<option>" + config.destinations[i].label + "</option>";
+    }
 
-document.getElementById("exportButton").onclick = function() {
-    searchStudies(function(res) {
-        let file = "Name,Patient ID,Accession No,Study Date, Description\n";
-        for (let i = 0; i < res.data.length; i++) {
-            let study = global.readStudiesResp(res.data[i]);
-            file += study.name.trim() + "," + study.patientId.trim() + "," + study.accessionNo.trim() + ",";
-            file += study.studyDate + "," + study.description.trim() + "\n";
-        }
+    // setup locale names
+    document.getElementById("patNameLabel").innerHTML = locale.patientName;
+    document.getElementById("colNameLabel").innerHTML = locale.patientName;
+    document.getElementById("accessionNoLabel").innerHTML = locale.accessionNo;
+    document.getElementById("colAccessionNoLabel").innerHTML = locale.accessionNo;
+    document.getElementById("patientIdLabel").innerHTML = locale.patientId;
+    document.getElementById("colPatientIdLabel").innerHTML = locale.patientId;
+    document.getElementById("studyDateLabel").innerHTML = locale.studyDate + " " + locale.studyDateFormat;
+    document.getElementById("colStudyDateLabel").innerHTML = locale.studyDate;
+    document.getElementById("modalityLabel").innerHTML = locale.modality;
+    document.getElementById("colModalityLabel").innerHTML = locale.modality;
+    document.getElementById("colDescription").innerHTML = locale.desc;
+    document.getElementById("all").innerHTML = locale.all;
+    document.getElementById("searchLabel").innerHTML = locale.search;
+    document.getElementById("cleanButton").innerHTML = locale.clean;
+    document.getElementById("destLabel").innerHTML = locale.dest;
+    document.getElementById("exportButton").innerHTML = locale.exportLabel;
 
-        var element = document.createElement('a');
-        element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(file));
-        element.setAttribute('download', 'orthanc_export.csv');
-      
-        element.style.display = 'none';
-        document.body.appendChild(element);
-      
-        element.click();
-      
-        document.body.removeChild(element);
+    // fill with params
+    let patName = global.getParams("patName");
+    let accessionNo = global.getParams("accessionNo");
+    let patientId = global.getParams("patientId");
+    let studyDate = global.getParams("studyDate");
+    let modality = global.getParams("modality");
+
+    document.getElementById("patName").value = patName;
+    document.getElementById("accessionNo").value = accessionNo;
+    document.getElementById("patientId").value = patientId;
+    document.getElementById("studyDate").value = studyDate;
+    if (modality) {
+        document.getElementById("modality").value = modality;
+    }
+
+    if (patName || accessionNo || patientId || studyDate) {
+        showStudies();
+    }
+
+    // clean all values
+    document.getElementById("cleanButton").onclick = function () {
+        document.getElementById("patName").value = "";
+        document.getElementById("accessionNo").value = "";
+        document.getElementById("patientId").value = "";
+        document.getElementById("studyDate").value = "";
+        document.getElementById("modality").value = locale.all;
+    }
+
+    // block all and ping audit server
+    blockForSeach();
+
+    global.sendAudit(config, "", () => {
+        readyForSearch();
+    }, () => {
+        global.alert(locale.auditConnectionError);
     });
-}
+
+    axios.get(config.audit, {
+        httpsAgent: new https.Agent({
+            rejectUnauthorized: false
+        })
+    }).then(function (res) {
+        if (res.status == 200) {
+            readyForSearch();
+        }
+    }).catch(function () {
+        global.alert(locale.auditConnectionError);
+    });
+
+    document.getElementById("searchButton").onclick = showStudies;
+
+    document.getElementById("exportButton").onclick = function() {
+        searchStudies(function(res) {
+            let file = "Name,Patient ID,Accession No,Study Date, Description\n";
+            for (let i = 0; i < res.data.length; i++) {
+                let study = global.readStudiesResp(res.data[i]);
+                file += study.name.trim() + "," + study.patientId.trim() + "," + study.accessionNo.trim() + ",";
+                file += study.studyDate + "," + study.description.trim() + "\n";
+            }
+
+            var element = document.createElement('a');
+            element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(file));
+            element.setAttribute('download', 'orthanc_export.csv');
+        
+            element.style.display = 'none';
+            document.body.appendChild(element);
+        
+            element.click();
+        
+            document.body.removeChild(element);
+        });
+    }
+}, () => {
+    global.alert(mainLocale['es'].invalidConfiguration);
+});

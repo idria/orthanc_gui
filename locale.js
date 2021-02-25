@@ -36,7 +36,8 @@ exports.es = {
     errModifyPatient: "No se puede modificar el paciente. Tiene enlazado mas de un estudio.",
     exportLabel: "Exportar",
     series: "Series",
-    auditConnectionError: "No hay conexión con el servidor de auditoria."
+    auditConnectionError: "No hay conexión con el servidor de auditoria.",
+    sendStudyConfirm: "Desea enviar el estudio seleccionado a: ",
 };
 
 exports.en =  {
@@ -77,5 +78,6 @@ exports.en =  {
     errModifyPatient: "Can't modify patient. Has more than one study linked.",
     exportLabel: "Export",
     series: "Series",
-    auditConnectionError: "No connection to audit server."
+    auditConnectionError: "No connection to audit server.",
+    sendStudyConfirm: "Do you want to send the selected study to: ",
 };

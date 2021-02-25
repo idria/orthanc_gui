@@ -1,34 +1,79 @@
 const mainLocale = require('./locale.js');
-const defaultConfig = require('./defaultConfig.js').config;
+const fs = require('fs');
 
-exports.getConfig = function() {
+var prompt = function(message, callback) {
+    vex.dialog.confirm({
+        message: message,
+        input: [
+            '<input name="data" type="text" placeholder="" required />',
+        ].join(''),
+        callback: function (value) {
+            callback(value.data);
+        }
+    });
+};
+
+var alert = function(message) {
+    vex.dialog.alert(message);
+};
+
+var confirm = function(message, callback) {
+    vex.dialog.confirm({
+        message: message,
+        callback: function (value) {
+            callback(value);
+        }
+    });
+};
+
+exports.prompt = prompt;
+exports.alert = alert;
+exports.confirm = confirm;
+
+exports.getConfig = function (cbOk, cbErr) {
     try {
-        return JSON.parse(fs.readFileSync('./config.json'));
-    } catch (err1) {
-        alert(mainLocale['es'].invalidConfiguration);
-    
-        // if missing create new file
-        if (!fs.existsSync('./config.json')) {
-            try {
-                fs.writeFileSync('./config.json', JSON.stringify(defaultConfig));
-                return JSON.parse(fs.readFileSync('./config.json'));
-            } catch (err2) {
-                alert(mainLocale['es'].invalidNew);
+        let config = JSON.parse(fs.readFileSync('./config.json'));
+
+        if(config.user == undefined) {
+            prompt('Enter user name:', (value) => {
+                if (value) {
+                    config.user = value;
+                    fs.writeFileSync('./config.json', JSON.stringify(config));
+                    if (cbOk) { 
+                        cbOk(config);
+                    }
+                } else {
+                    if (cbErr) { 
+                        cbErr();
+                    }
+                }
+            });
+        } else {
+            if (cbOk) { 
+                cbOk(config);
             }
+        }
+    } catch (err) {
+        if (cbErr) { 
+            cbErr();
         }
     }
 };
 
-exports.getLocale = function(config) {
-    return mainLocale[config.locale];
+exports.getLocale = function (config) {
+    if (config == undefined) {
+        return mainLocale['es'];
+    } else {
+        return mainLocale[config.locale];
+    }
 };
 
-exports.getParams = function(name) {
+exports.getParams = function (name) {
     let url = new URL(window.location.href);
     return url.searchParams.get(name);
 };
 
-exports.readStudiesResp = function(resp) {
+exports.readStudiesResp = function (resp) {
     let studyHash = "";
     let name = "";
     let accessionNo = "";
@@ -95,7 +140,7 @@ exports.readStudiesResp = function(resp) {
     };
 };
 
-exports.readSeriesResp = function(resp) {
+exports.readSeriesResp = function (resp) {
     let seriesHash = '';
     let bodyPartExamined = '';
     let modality = '';
@@ -139,22 +184,22 @@ exports.readSeriesResp = function(resp) {
     };
 };
 
-exports.sendAudit = function(config, message, cbOk, cbError) {
+exports.sendAudit = function (config, message, cbOk, cbError) {
     axios.post(config.audit, message, {
         httpsAgent: new https.Agent({
             rejectUnauthorized: false
         })
     }).then(function (res) {
         if (res.status == 200) {
-            if(cbOk) { cbOk(); }
+            if (cbOk) { cbOk(); }
         }
     }).catch(function () {
-        if(cbError) { cbError(); }
+        if (cbError) { cbError(); }
     });
 };
 
-exports.getStudy = function(global, hash) {
-    for(let i=0;i<global.length;i++) {
+exports.getStudy = function (global, hash) {
+    for (let i = 0; i < global.length; i++) {
         if (global[i].studyHash == hash) {
             return global[i];
         }
@@ -163,9 +208,9 @@ exports.getStudy = function(global, hash) {
     return {};
 };
 
-exports.addStudyObj = function(global, hash, name, data) {
-    for(let i=0;i<global.length;i++) {
-        if(global[i].studyHash == hash) {
+exports.addStudyObj = function (global, hash, name, data) {
+    for (let i = 0; i < global.length; i++) {
+        if (global[i].studyHash == hash) {
             global[i][name] = data;
         }
     }
