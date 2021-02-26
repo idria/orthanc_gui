@@ -18,7 +18,7 @@ function readyForSearch() {
 }
 
 // progress bar 
-function checkProgress(id) {
+function checkProgress(id, studyHash) {
     axios.get(config.servers.store + '/jobs/' + id, {
         httpsAgent: new https.Agent({
             rejectUnauthorized: false
@@ -30,6 +30,10 @@ function checkProgress(id) {
                     document.getElementById("progress").style = "width: 100%";
                     document.getElementById("progress").classList.add("bg-success");
                     document.getElementById("studiesTable").removeAttribute("disabled", "");
+
+                    if(studyHash) {
+                        deleteStudy(null, studyHash);
+                    }
                 } else {
                     document.getElementById("progress").style = "width: " + res.data.Progress + "%";
                     if (res.data.ErrorCode) {
@@ -37,7 +41,7 @@ function checkProgress(id) {
                         document.getElementById("studiesTable").removeAttribute("disabled", "");
                         global.alert(locale.sendError + res.data.ErrorDescription);
                     } else {
-                        setTimeout(checkProgress(id), 5000);
+                        setTimeout(checkProgress(id, studyHash), 5000);
                     }
                 }
             }
@@ -45,7 +49,7 @@ function checkProgress(id) {
     }).catch(function () {
         document.getElementById("progress").classList.add("bg-danger");
         document.getElementById("studiesTable").removeAttribute("disabled", "");
-        setTimeout(checkProgress(id), 5000);
+        setTimeout(checkProgress(id, studyHash), 5000);
     });
 }
 
@@ -71,7 +75,7 @@ function changeAccesionNo(id) {
                         document.getElementById("progress").classList.remove("bg-danger");
                         document.getElementById("studiesTable").setAttribute("disabled", "");
                         // progress bar
-                        checkProgress(res.data.ID);
+                        checkProgress(res.data.ID, id);
                         // send audit
                         let message = global.getStudy(globalStudies, id);
                         message.user = config.user;
@@ -131,7 +135,7 @@ function changePatientId(id) {
                                             document.getElementById("progress").classList.remove("bg-danger");
                                             document.getElementById("studiesTable").setAttribute("disabled", "");
                                             // progress bar
-                                            checkProgress(res.data.ID);
+                                            checkProgress(res.data.ID, null);
                                             // send audit
                                             let message = global.getStudy(globalStudies, id);
                                             message.user = config.user;
@@ -170,7 +174,9 @@ function changePatientId(id) {
 function deleteStudy(elemnt, id) {
     global.confirm(locale.deleteQuestion, (value) => {
         if (value) {
-            elemnt.setAttribute("disabled", "");
+            if (elemnt) {
+                elemnt.setAttribute("disabled", "");
+            }
     
             axios.delete(config.servers.store + '/studies/' + id, {
                 httpsAgent: new https.Agent({
@@ -188,7 +194,9 @@ function deleteStudy(elemnt, id) {
                     global.sendAudit(config, message);
                 }else{
                     global.alert(locale.invalidResp);
-                    elemnt.removeAttribute("disabled", "");
+                    if (elemnt) {
+                        elemnt.removeAttribute("disabled", "");
+                    }
                 }
             }).catch(function (err) {
                 global.alert(locale.connectionError + err);
@@ -231,7 +239,7 @@ function sendStudy(id) {
                         document.getElementById("progress").classList.remove("bg-danger");
                         document.getElementById("studiesTable").setAttribute("disabled", "");
                         // progress bar
-                        checkProgress(res.data.ID);
+                        checkProgress(res.data.ID, null);
                         // send audit
                         let message = global.getStudy(globalStudies, id);
                         message.user = config.user;
