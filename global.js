@@ -186,17 +186,21 @@ exports.readSeriesResp = function (resp) {
 };
 
 exports.sendAudit = function (config, message, cbOk, cbError) {
-    axios.post(config.audit, message, {
-        httpsAgent: new https.Agent({
-            rejectUnauthorized: false
-        })
-    }).then(function (res) {
-        if (res.status == 200) {
-            if (cbOk) { cbOk(); }
-        }
-    }).catch(function () {
-        if (cbError) { cbError(); }
-    });
+    if (config.audit) {
+        axios.post(config.audit, message, {
+            httpsAgent: new https.Agent({
+                rejectUnauthorized: false
+            })
+        }).then(function (res) {
+            if (res.status == 200) {
+                if (cbOk) { cbOk(); }
+            }
+        }).catch(function () {
+            if (cbError) { cbError(); }
+        });
+    } else {
+        if (cbOk) { cbOk(); }
+    }
 };
 
 exports.getStudy = function (global, hash) {

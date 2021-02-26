@@ -18,8 +18,8 @@ function readyForSearch() {
 }
 
 // progress bar 
-function checkProgress(id, studyHash) {
-    axios.get(config.servers.store + '/jobs/' + id, {
+function checkProgress(jobID, oldStudyHash, newStudyHash) {
+    axios.get(config.servers.store + '/jobs/' + jobID, {
         httpsAgent: new https.Agent({
             rejectUnauthorized: false
         })
@@ -31,8 +31,11 @@ function checkProgress(id, studyHash) {
                     document.getElementById("progress").classList.add("bg-success");
                     document.getElementById("studiesTable").removeAttribute("disabled", "");
 
-                    if(studyHash) {
-                        deleteStudy(null, studyHash);
+                    if(oldStudyHash) {
+                        if (newStudyHash) {
+                            document.getElementById("accessionNo").value = newStudyHash;
+                        }
+                        deleteStudy(null, oldStudyHash);
                     }
                 } else {
                     document.getElementById("progress").style = "width: " + res.data.Progress + "%";
@@ -41,7 +44,7 @@ function checkProgress(id, studyHash) {
                         document.getElementById("studiesTable").removeAttribute("disabled", "");
                         global.alert(locale.sendError + res.data.ErrorDescription);
                     } else {
-                        setTimeout(checkProgress(id, studyHash), 5000);
+                        setTimeout(checkProgress(jobID, oldStudyHash, newStudyHash), 5000);
                     }
                 }
             }
@@ -49,7 +52,7 @@ function checkProgress(id, studyHash) {
     }).catch(function () {
         document.getElementById("progress").classList.add("bg-danger");
         document.getElementById("studiesTable").removeAttribute("disabled", "");
-        setTimeout(checkProgress(id, studyHash), 5000);
+        setTimeout(checkProgress(jobID, oldStudyHash, newStudyHash), 5000);
     });
 }
 
@@ -75,7 +78,7 @@ function changeAccesionNo(id) {
                         document.getElementById("progress").classList.remove("bg-danger");
                         document.getElementById("studiesTable").setAttribute("disabled", "");
                         // progress bar
-                        checkProgress(res.data.ID, id);
+                        checkProgress(res.data.ID, id, text.trim());
                         // send audit
                         let message = global.getStudy(globalStudies, id);
                         message.user = config.user;
@@ -135,7 +138,7 @@ function changePatientId(id) {
                                             document.getElementById("progress").classList.remove("bg-danger");
                                             document.getElementById("studiesTable").setAttribute("disabled", "");
                                             // progress bar
-                                            checkProgress(res.data.ID, null);
+                                            checkProgress(res.data.ID, null, null);
                                             // send audit
                                             let message = global.getStudy(globalStudies, id);
                                             message.user = config.user;
@@ -239,7 +242,7 @@ function sendStudy(id) {
                         document.getElementById("progress").classList.remove("bg-danger");
                         document.getElementById("studiesTable").setAttribute("disabled", "");
                         // progress bar
-                        checkProgress(res.data.ID, null);
+                        checkProgress(res.data.ID, null, null);
                         // send audit
                         let message = global.getStudy(globalStudies, id);
                         message.user = config.user;
@@ -457,14 +460,16 @@ global.getConfig((inputConfig) => {
         document.getElementById("modality").value = locale.all;
     }
 
-    // block all and ping audit server
-    blockForSeach();
+    // audit server ping test
+    if (config.audit) {
+        blockForSeach();
 
-    global.sendAudit(config, "", () => {
-        readyForSearch();
-    }, () => {
-        global.alert(locale.auditConnectionError);
-    });
+        global.sendAudit(config, "", () => {
+            readyForSearch();
+        }, () => {
+            global.alert(locale.auditConnectionError);
+        });
+    }
 
     axios.get(config.audit, {
         httpsAgent: new https.Agent({

@@ -1,6 +1,6 @@
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
-const { app, BrowserWindow, dialog } = require('electron');
+const { app, dialog, BrowserWindow } = require('electron');
 const fs = require('fs');
 
 // create user data path
@@ -19,12 +19,6 @@ function startApp() {
     show: false
   });
 
-  function startWindow() {
-    win.loadFile('index.html');
-    win.maximize();
-    win.show();
-  }
-
   // check if config file exists
   if (!fs.existsSync(configPath)) {
     dialog.showOpenDialog({
@@ -37,13 +31,17 @@ function startApp() {
       } else {
         let newConfig = JSON.parse(fs.readFileSync(file.filePaths[0]));
         fs.writeFileSync(configPath, JSON.stringify(newConfig));
-        startWindow();
+        win.loadFile('index.html');
+        win.maximize();
+        win.show();
       }
     }).catch(() => {
       app.quit();
     });
   } else {
-    startWindow();
+    win.loadFile('index.html');
+    win.maximize();
+    win.show();
   }
 }
 
@@ -58,6 +56,6 @@ app.on('window-all-closed', () => {
 
 app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) {
-    appReady();
+    startApp();
   }
 });
