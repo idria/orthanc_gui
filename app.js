@@ -244,10 +244,10 @@ function sendStudy(id) {
                         // progress bar
                         checkProgress(res.data.ID, null, null);
                         // send audit
-                        let message = global.getStudy(globalStudies, id);
-                        message.user = config.user;
-                        message.action = 'sendStudy';
-                        global.sendAudit(config, message);
+                        // let message = global.getStudy(globalStudies, id);
+                        // message.user = config.user;
+                        // message.action = 'sendStudy';
+                        // global.sendAudit(config, message);
                     } else {
                         global.alert(locale.invalidResp);
                     }

@@ -11,6 +11,14 @@ const DailyRotateFile = require('winston-daily-rotate-file');
 const { createLogger, format, transports } = require('winston');
 const { combine, timestamp, label, printf } = format;
 
+Array.prototype.remove = function(item) {
+    for (let i = 0; i < this.length; i++) {
+        if (this[i] === item) {
+            this.splice(i, 1);
+        }
+    }
+}
+
 const myFormat = printf(({ level, message, timestamp }) => {
     return `${timestamp} ${level}: ${message}`;
 });
@@ -18,18 +26,18 @@ const myFormat = printf(({ level, message, timestamp }) => {
 const logger = winston.createLogger({
     level: 'info',
     format: combine(
-      timestamp(),
-      myFormat
+        timestamp(),
+        myFormat
     ),
     transports: [
-      new winston.transports.Console(),
-      new DailyRotateFile({
-          filename: 'application-%DATE%.log',
-          datePattern: 'YYYY-MM-DD-HH',
-          zippedArchive: true,
-          maxSize: '20m',
-          maxFiles: '14d'
-       })
+        new winston.transports.Console(),
+        new DailyRotateFile({
+            filename: 'application-%DATE%.log',
+            datePattern: 'YYYY-MM-DD-HH',
+            zippedArchive: true,
+            maxSize: '20m',
+            maxFiles: '14d'
+        })
     ],
 });
   
@@ -44,6 +52,16 @@ const requestListener = function (request, response) {
         try {
             body = Buffer.concat(body).toString();
             message = JSON.parse(body);
+
+            if (message.modsInStudy) {
+                if (message.modsInStudy.length > 0) {
+                    let mods = message.modsInStudy;
+                    mods = mods.remove('PR');
+                    mods = mods.remove('SC');
+                    mods = mods.remove('SR');
+                    message.modsInStudy = mods[0];
+                }
+            }
         } catch(err) {
             logger.log('info', 'Body empty.');
         }

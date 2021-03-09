@@ -1,7 +1,7 @@
 {
   "name": "orthanc_gui",
   "productName": "orthanc_gui",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Simple Orthanc GUI client.",
   "repository": "https://github.com/idria/orthanc_gui",
   "main": "main.js",
