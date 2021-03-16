@@ -89,7 +89,7 @@ window.onload = function () {
         }
 
         if (splitSeries.length > 0) {
-            global.prompt("Orthanc GUI", locale.accessionNoLabel, (text) => {
+            global.prompt(locale.accessionNoLabel, (text) => {
                 if (text) {
                     axios.post(config.servers.query + '/studies/' + global.getParams("id") + '/split', {
                         "Series": splitSeries,

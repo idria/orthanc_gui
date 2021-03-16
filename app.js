@@ -119,7 +119,16 @@ function changePatientId(id) {
                             })
                         }).then(function (res) {
                             if (res.data.Studies !== undefined) {
-                                if (res.data.Studies.length == 1) {
+
+                                let studiesLimit = 2;
+
+                                if (typeof config.patientIdLock === 'undefined') {
+                                    if (config.patientIdLock === false) {
+                                        studiesLimit = 1000;
+                                    }
+                                }
+
+                                if (res.data.Studies.length < studiesLimit) {
                                     // modify patient id
                                     axios.post(config.servers.store + '/patients/' + patient + '/modify', {
                                         "Asynchronous": true,
@@ -244,10 +253,10 @@ function sendStudy(id) {
                         // progress bar
                         checkProgress(res.data.ID, null, null);
                         // send audit
-                        // let message = global.getStudy(globalStudies, id);
-                        // message.user = config.user;
-                        // message.action = 'sendStudy';
-                        // global.sendAudit(config, message);
+                        let message = global.getStudy(globalStudies, id);
+                        message.user = config.user;
+                        message.action = 'sendStudy';
+                        global.sendAudit(config, message);
                     } else {
                         global.alert(locale.invalidResp);
                     }
@@ -333,6 +342,19 @@ function showStudies() {
     searchStudies(function(res) {
         let table = "";
         globalStudies = [];
+
+        // order response
+        function compare(a, b) {
+            if ( a.MainDicomTags.StudyDate < b.MainDicomTags.StudyDate ){
+                return -1;
+            }
+            if ( a.MainDicomTags.StudyDate > b.MainDicomTags.StudyDate ){
+                return 1;
+            }
+            return 0;
+        }
+
+        res.data.sort(compare);
 
         for (let i = 0; i < res.data.length; i++) {
             let study = global.readStudiesResp(res.data[i]);
@@ -506,6 +528,31 @@ global.getConfig((inputConfig) => {
             document.body.removeChild(element);
         });
     }
+
+    // on enter
+    function pressEnter(evt) {
+        if (evt.keyCode === 13) {
+            evt.preventDefault();
+            evt.stopImmediatePropagation();
+            showStudies();
+        }
+    }
+
+    document.getElementById("patName").addEventListener('keyup', function(evt) {
+        pressEnter(evt);
+    });
+
+    document.getElementById("accessionNo").addEventListener('keyup', function(evt) {
+        pressEnter(evt);
+    });
+
+    document.getElementById("patientId").addEventListener('keyup', function(evt) {
+        pressEnter(evt);
+    });
+
+    document.getElementById("studyDate").addEventListener('keyup', function(evt) {
+        pressEnter(evt);
+    });
 }, () => {
     global.alert(mainLocale['es'].invalidConfiguration);
 });
