@@ -426,9 +426,8 @@ function showStudies() {
     });
 }
 
-global.getConfig((inputConfig) => {
+global.getConfig((config) => {
     let globalStudies = [];
-    config = inputConfig;
     locale = global.getLocale(config);
     
     // destinations
@@ -554,5 +553,6 @@ global.getConfig((inputConfig) => {
         pressEnter(evt);
     });
 }, () => {
-    global.alert(mainLocale['es'].invalidConfiguration);
+    global.alert("Error!");
+    window.close();
 });

@@ -36,7 +36,8 @@ exports.getConfig = function (cbOk, cbErr) {
         let config = JSON.parse(fs.readFileSync(configPath));
 
         if(config.user == undefined) {
-            prompt('Enter user name:', (value) => {
+            // add new user
+            prompt('User name:', (value) => {
                 if (value) {
                     config.user = value;
                     fs.writeFileSync(configPath, JSON.stringify(config));
@@ -50,8 +51,23 @@ exports.getConfig = function (cbOk, cbErr) {
                 }
             });
         } else {
-            if (cbOk) { 
-                cbOk(config);
+            // check and test password
+            if(typeof config.password !== 'undefined') {
+                prompt('Password:', (value) => {
+                    if (config.password === value) {
+                        if (cbOk) { 
+                            cbOk(config);
+                        }
+                    } else {
+                        if (cbErr) { 
+                            cbErr();
+                        }
+                    }
+                });
+            } else {
+                if (cbOk) { 
+                    cbOk(config);
+                }
             }
         }
     } catch (err) {

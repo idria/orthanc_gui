@@ -15,7 +15,7 @@ function startApp() {
     webPreferences: {
       nodeIntegration: true
     },
-    icon: __dirname + '/icon.jpg',
+    icon: __dirname + '/favicon.ico',
     show: false
   });
 

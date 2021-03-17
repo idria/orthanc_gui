@@ -1,4 +1,5 @@
 win:
+  icon: "favicon.ico"
   target:
     - target: nsis
       arch:

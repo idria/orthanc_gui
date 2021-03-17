@@ -29,7 +29,7 @@ exports.es = {
     bodyPartExamined: "Parte del Cuerpo",
     stationName: "Nombre de Estación",
     noSelection: "Nada seleccionado!",
-    splitMessage: "1. Verifique que los datos del estudio.</br>2. Seleccione las series que desea separar a un nuevo estudio.</br>3. Click en separar.</br>4. Ingrese el Número de Acceso del estudio nuevo.",
+    splitMessage: "1. Verifique los datos del estudio.</br>2. Seleccione las series que desea separar a un nuevo estudio.</br>3. Click en separar.</br>4. Ingrese el Número de Acceso del estudio nuevo.",
     modified: "Modificado!",
     deleted: "Borrado!",
     deleteQuestion: "Desea borrar el estudio seleccionado?",
