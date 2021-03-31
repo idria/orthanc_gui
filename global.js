@@ -161,8 +161,11 @@ exports.readSeriesResp = function (resp) {
     let seriesHash = '';
     let bodyPartExamined = '';
     let modality = '';
+    let protocolName = '';
+    let seriesDate = '';
     let seriesDescription = '';
     let seriesNo = '';
+    let seriesTime = '';
     let stationName = '';
 
     if (resp.ID !== undefined) {
@@ -178,12 +181,24 @@ exports.readSeriesResp = function (resp) {
             modality = resp.MainDicomTags.Modality;
         }
 
+        if (resp.MainDicomTags.ProtocolName !== undefined) {
+            protocolName = resp.MainDicomTags.ProtocolName;
+        }
+
+        if (resp.MainDicomTags.SeriesDate !== undefined) {
+            seriesDate = resp.MainDicomTags.SeriesDate;
+        }
+
         if (resp.MainDicomTags.SeriesDescription !== undefined) {
             seriesDescription = resp.MainDicomTags.SeriesDescription;
         }
 
         if (resp.MainDicomTags.SeriesNumber !== undefined) {
             seriesNo = resp.MainDicomTags.SeriesNumber;
+        }
+
+        if (resp.MainDicomTags.SeriesTime !== undefined) {
+            seriesTime = resp.MainDicomTags.SeriesTime;
         }
 
         if (resp.MainDicomTags.StationName !== undefined) {
@@ -195,8 +210,11 @@ exports.readSeriesResp = function (resp) {
         seriesHash: seriesHash,
         bodyPartExamined: bodyPartExamined,
         modality: modality,
+        protocolName: protocolName, 
+        seriesDate: seriesDate,
         seriesDescription: seriesDescription,
         seriesNo: seriesNo,
+        seriesTime: seriesTime,
         stationName: stationName
     };
 };

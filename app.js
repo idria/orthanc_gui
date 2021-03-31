@@ -65,7 +65,7 @@ function changeAccesionNo(id) {
                 axios.post(config.servers.store + '/studies/' + id + '/modify', {
                     "Asynchronous": true,
                     "Replace": {
-                        "AccessionNumber": text.trim()
+                        "AccessionNumber": text.toUpperCase().trim()
                     }
                 }, {
                     httpsAgent: new https.Agent({
@@ -78,12 +78,12 @@ function changeAccesionNo(id) {
                         document.getElementById("progress").classList.remove("bg-danger");
                         document.getElementById("studiesTable").setAttribute("disabled", "");
                         // progress bar
-                        checkProgress(res.data.ID, id, text.trim());
+                        checkProgress(res.data.ID, id, text.toUpperCase().trim());
                         // send audit
                         let message = global.getStudy(globalStudies, id);
                         message.user = config.user;
                         message.action = 'changeAccessionNo';
-                        message.newValue = text.trim();
+                        message.newValue = text.toUpperCase().trim();
                         global.sendAudit(config, message);
                     } else {
                         global.alert(locale.invalidResp);
@@ -404,8 +404,8 @@ function showStudies() {
             table += '<tr>';
             table += '<th scope="row">' + i + '</th>';
             table += '<td>' + study.name + '</td>';
-            table += '<td onclick="changeAccesionNo(' + "'" + study.studyHash + "'" + ');">' + study.accessionNo + '</td>';
-            table += '<td onclick="changePatientId(' + "'" + study.studyHash + "'" + ');">' + study.patientId + '</td>';
+            table += '<td ondblclick="changeAccesionNo(' + "'" + study.studyHash + "'" + ');">' + study.accessionNo + '</td>';
+            table += '<td ondblclick="changePatientId(' + "'" + study.studyHash + "'" + ');">' + study.patientId + '</td>';
             table += '<td>' + study.studyDate + '</td>';
             table += '<td id="MOD_' + study.studyHash + '"></td>';
             table += '<td>' + study.description + '</td>';
@@ -426,8 +426,9 @@ function showStudies() {
     });
 }
 
-global.getConfig((config) => {
+global.getConfig((inputConfig) => {
     let globalStudies = [];
+    config = inputConfig;
     locale = global.getLocale(config);
     
     // destinations

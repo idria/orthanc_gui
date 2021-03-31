@@ -10,7 +10,7 @@ window.onload = function () {
     let globalStudy = {};
 
     // load series
-    axios.get(config.servers.store + '/studies/' + global.getParams("id"), {
+    axios.get(config.servers.query + '/studies/' + global.getParams("id"), {
         httpsAgent: new https.Agent({
             rejectUnauthorized: false
         })
@@ -62,6 +62,9 @@ window.onload = function () {
                         table += '<td>' + series.seriesDescription + '</td>';
                         table += '<td>' + series.bodyPartExamined + '</td>';
                         table += '<td>' + series.modality + '</td>';
+                        table += '<td>' + series.protocolName + '</td>';
+                        table += '<td>' + series.seriesDate + '</td>';
+                        table += '<td>' + series.seriesTime + '</td>';
                         table += '<td>' + series.stationName + '</td>';
                         table += '<td><input type="checkbox" class="checkGroup form-check-input" name="' + series.seriesHash + '"></td>';
                         table += '</tr>';
@@ -91,7 +94,7 @@ window.onload = function () {
         if (splitSeries.length > 0) {
             global.prompt(locale.accessionNoLabel, (text) => {
                 if (text) {
-                    axios.post(config.servers.query + '/studies/' + global.getParams("id") + '/split', {
+                    axios.post(config.servers.store + '/studies/' + global.getParams("id") + '/split', {
                         "Series": splitSeries,
                         "Replace": {
                             "AccessionNumber": text.trim()
@@ -121,6 +124,42 @@ window.onload = function () {
             global.alert(locale.noSelection);
         }
     }
+
+    // setup delete button
+    document.getElementById("deleteButton").onclick = function() {
+        let checks = document.getElementsByClassName("checkGroup");
+        let deleteSeries = [];
+
+        for (var i = 0; i < checks.length; i++) {
+            if (checks[i].checked) {
+                deleteSeries.push(checks[i].name);
+            }
+        }
+
+        if (deleteSeries.length === 0) {
+            global.alert(locale.noSelection);
+        } else if (deleteSeries.length === 1) {
+                        global.confirm(locale.deleteQuestionSeries, (value) => {
+                if (value) {
+                    axios.delete(config.servers.store + '/series/' + deleteSeries[0], {
+                        httpsAgent: new https.Agent({
+                            rejectUnauthorized: false
+                        })
+                    }).then(function (res) {
+                        if (res.status == 200) {
+                            global.alert(locale.deleted);
+                        }else{
+                            global.alert(locale.invalidResp);
+                        }
+                    }).catch(function (err) {
+                        global.alert(locale.connectionError + err);
+                    });
+                }
+            });
+        } else {
+            global.alert(locale.onlyOneSelection);
+        }
+    }
 }; 
 
 global.getConfig((inputConfig) => {
@@ -132,14 +171,17 @@ global.getConfig((inputConfig) => {
     document.getElementById("colSeriesDescLabel").innerHTML = locale.seriesDesc;
     document.getElementById("colBodyPartExaminedLabel").innerHTML = locale.bodyPartExamined;
     document.getElementById("colModalityLabel").innerHTML = locale.modality;
+    document.getElementById("colProtocolName").innerHTML = locale.protocolName;
+    document.getElementById("colSeriesDate").innerHTML = locale.seriesDate;
+    document.getElementById("colSeriesTime").innerHTML = locale.seriesTime;
     document.getElementById("colStationName").innerHTML = locale.stationName;
     document.getElementById("splitButton").innerHTML = locale.split;
+    document.getElementById("deleteButton").innerHTML = locale.delete;
     document.getElementById("splitMessage").innerHTML = locale.splitMessage;
 
     if (!config.split) {
         document.getElementById("splitButton").setAttribute("disabled", "");
     }
-}, () => {
-    global.alert(mainLocale['es'].invalidConfiguration);
+}, (err) => {
+    console.log(err);
 });
-
